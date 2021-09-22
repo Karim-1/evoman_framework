@@ -17,31 +17,34 @@ from controller import Controller
 from demo_controller import player_controller, enemy_controller
 from environment import Environment
 
-
-experiment_name = 'neat_algorithm'
-if not os.path.exists(experiment_name):
-    os.makedirs(experiment_name)
-
-# initializes environment with ai player using random controller, playing against static enemy
-env = Environment(
-    experiment_name=experiment_name,
-    # player_controller=player_controller(Controller),
-    # enemy_controller=enemy_controller()
-)
-env.play()
-
-
 # run algorithm
-def run(path):
-    config = neat.config.Config(fitness_criterion = max,
-     neat.DefaultGenome,
-     neat.DefaultReproduction, 
-     neat.DefaultSpeciesSet, 
-     neat.DefaultStagnation, 
-     path)
+def run(path, experiment_name):
+    # create NEAT configuration
+    config = neat.Config(neat.DefaultGenome, 
+                        neat.DefaultReproduction, 
+                        neat.DefaultSpeciesSet, 
+                        neat.DefaultStagnation,
+                        config_file)
+    
+    # create random NEAT population
+    p = neat.Population(config)
+
+    # initializes environment with ai player using random controller, playing against static enemy
+    env = Environment(
+        experiment_name=experiment_name
+        )
+    # env.play()
+    print(env.play())
+
+    # stop condition --> reaching some minimum level of diversity?
+    # or --> reaching some specified number of generations without fitness improvement
 
 # test
 if __name__ == "__main__":
+    experiment_name = 'neat_algorithm'
+    if not os.path.exists(experiment_name):
+        os.makedirs(experiment_name)
+    
     local_dir = os.path.dirname(__file__)
-	config_path = os.path.join(local_dir, "config-feedforward.txt")
-    run(config_path)
+    config_file = os.path.join(local_dir, "neat-config.txt")
+    run(config_file, experiment_name)
