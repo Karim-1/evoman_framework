@@ -22,6 +22,7 @@ from environment import Environment
 # TODO:
 # --> may be good to crossect between individuals that are most different
 # --> use around 25-150 generations (common in literature), roughly 2-5 changes per generation (depends on pop size)
+# hoi Jimmy
 
 
 def eval_genomes(genomes, config):
