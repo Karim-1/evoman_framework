@@ -189,7 +189,7 @@ if not os.path.exists(experiment_name+'/evoman_solstate'):
     env.update_solutions(solutions)
 
 else:
-
+    
     print( '\nCONTINUING EVOLUTION\n')
 
     env.load_state()

@@ -16,9 +16,9 @@ import time
 # import classes
 sys.path.insert(0, 'evoman') 
 
-from controller import Controller
 from demo_controller import NEAT_controller
 from environment import Environment
+from play_winner import play_winner
 from plot_fitness import plot_fitness
 
 # TODO:
@@ -29,7 +29,6 @@ from plot_fitness import plot_fitness
 # or --> reaching some specified number of generations without fitness improvement
 
 
-
 def eval_genomes(genomes, config):
     '''
     evaluates the fitness of each genome
@@ -38,9 +37,13 @@ def eval_genomes(genomes, config):
     genome_fitnesses = []
     for genome_id, genome in genomes:
         fitness, p, e, t = simulate(genome)
-
         genome.fitness = fitness
         genome_fitnesses.append(fitness)
+    
+    # sigma scale the fitnesses of the genomes
+    scaled_fitness = sigma_scale(genome_fitnesses)
+    for i in range(len(genomes):
+        genomes[i][1].fitness = scaled_fitness[i]
     
     # retrieve mean and best fitness for the genomes
     mean_fitness.append(np.mean(genome_fitnesses))
@@ -52,11 +55,28 @@ def eval_genomes(genomes, config):
     return genomes
     
 
+def sigma_scale(f):
+    '''
+    sigma scales the fitness according to the sigma scaling function
+    a constant of 2 is used
+    '''
+    mean_f = np.mean(f)
+    sigma_f = np.std(f)
+    c = 2
+    
+    for i in range(len(f)):
+        f[i] = np.max(f[i]-(mean_f-c*sigma_f), 0)
+    
+    return f
+    
+
 def simulate(genome):
     return env.play(pcont=genome)
 
 # run algorithm
 def run(path, experiment_name):
+    N_GENERATIONS = 50
+    
     # create NEAT configuration
     config = neat.Config(neat.DefaultGenome, 
                         neat.DefaultReproduction, 
@@ -75,7 +95,7 @@ def run(path, experiment_name):
     t0 = time.time()
 
     # run all generations and pick winner
-    winner = pop.run(eval_genomes,3)
+    winner = pop.run(eval_genomes, N_GENERATIONS)
 
     # Display the winning genome
     print('\nBest genome:\n{!s}'.format(winner))
@@ -85,14 +105,25 @@ def run(path, experiment_name):
         f.close()
 
     t1 = time.time()
-    
+
+    # mean_fitness = np.load(f"{experiment_name}_results/best_fitness")
+    # best_fitness = np.load(f"{experiment_name}_results/best_fitness")
+
     print(f'\n----- simulation took {np.round(t1-t0,1)} seconds -----\n')
     print(mean_fitness)
     print(best_fitness)
 
+    # plot results
+    plot_fitness(mean_fitness, best_fitness)
+
+    # shows simulation of the winning genome
+    play_winner(env, winner)
+
 
 if __name__ == "__main__":
     experiment_name = 'neat'
+    enemies = [1,2,3]
+
     if not os.path.exists(f'{experiment_name}_results'):
         os.makedirs(f'{experiment_name}_results')
     
@@ -102,11 +133,11 @@ if __name__ == "__main__":
 
     # remove game display
     os.environ["SDL_VIDEODRIVER"] = "dummy"
-
+    
     # initialize environment with NEAT network as player controller
     env = Environment(
         experiment_name=experiment_name,
-        enemies=[2],
+        enemies=enemies,
         playermode = 'ai',
         enemymode='static',
         sound='off',
