@@ -105,15 +105,15 @@ def run_neat(path, experiment_name):
     # Display the winning genome
     print('\nBest genome:\n{!s}'.format(winner))
 
-    with open(f"results/{experiment_name}_results/winner.pkl", "wb") as f:
+    with open(f"results/{experiment_name}/winner.pkl", "wb") as f:
         pickle.dump(winner, f)
         f.close()
 
     # retrieve best and mean fitness from stats
     best_fitness = [c.fitness for c in stats.most_fit_genomes]
     mean_fitness = np.array(stats.get_fitness_mean())
-    np.save(f"results/{experiment_name}_results/mean_fitness", mean_fitness)
-    np.save(f"results/{experiment_name}_results/best_fitness", best_fitness)
+    np.save(f"results/{experiment_name}/mean_fitness", mean_fitness)
+    np.save(f"results/{experiment_name}/best_fitness", best_fitness)
     print('MEAN FITNESS:\n', mean_fitness)
     print('BEST FITNESS:\n', best_fitness)
 
@@ -128,7 +128,7 @@ def run_neat(path, experiment_name):
 if __name__ == "__main__":
     enemies = [2,4,5]
     for en in enemies:
-        experiment_name = f'undirected_pop100_en{en}'
+        experiment_name = f'undirected_pop50_en{en}'
         if not os.path.exists(f'results/{experiment_name}'):
             os.makedirs(f'results/{experiment_name}')
         
