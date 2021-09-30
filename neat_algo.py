@@ -91,10 +91,10 @@ def run_neat(path, experiment_name):
     pop = neat.Population(config)
     
     # add reporter for population
-    pop.add_reporter(neat.StdOutReporter(True))
+    pop.add_reporter(neat.StdOutReporter(False))
     stats = neat.StatisticsReporter()
     pop.add_reporter(stats)
-    # # this can be commented out if you need a checkpointer
+    # # this can be used if you need a checkpointer
     # pop.add_reporter(neat.Checkpointer(10))
     
     t0 = time.time()
@@ -128,7 +128,7 @@ def run_neat(path, experiment_name):
 if __name__ == "__main__":
     enemies = [2,4,5]
     for en in enemies:
-        experiment_name = f'undirected_pop50_en{en}'
+        experiment_name = f'undirected_pop150_en{en}'
         if not os.path.exists(f'results/{experiment_name}'):
             os.makedirs(f'results/{experiment_name}')
         
