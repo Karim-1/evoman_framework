@@ -4,8 +4,8 @@
 # or the experiment itself.  This is the only required section.
 [NEAT]
 fitness_criterion     = max
-fitness_threshold     = 300
-pop_size              = 50
+fitness_threshold     = 100
+pop_size              = 100
 reset_on_extinction   = False
 
 [DefaultGenome]
@@ -57,7 +57,7 @@ weight_mutate_rate      = 0.25
 weight_replace_rate     = 0.1
 weight_mutate_power     = 0.5
 
-initial_connection      = partial_direct .5
+initial_connection      = unconnected
 feed_forward            = True
 
 [DefaultSpeciesSet]
@@ -65,8 +65,8 @@ compatibility_threshold = 3.0
 
 [DefaultStagnation]
 species_fitness_func = max
-max_stagnation  = 12
-species_elitism = 2
+max_stagnation  = 10
+species_elitism = 3
 
 [DefaultReproduction]
 elitism            = 2

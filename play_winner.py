@@ -22,7 +22,7 @@ def play_winner(env, winner):
 if __name__ == "__main__":
         env = Environment(
                 experiment_name='play_winner',
-                enemies=[2],
+                enemies=[5],
                 playermode = 'ai',
                 enemymode='static',
                 sound='off',
@@ -32,7 +32,7 @@ if __name__ == "__main__":
                 logs='off'
                 )
 
-        with open('results/unconnected_results/winner.pkl', "rb") as f:
+        with open('results/partial_nodirect_pop50_results/winner.pkl', "rb") as f:
                 genome = pickle.load(f)
 
         play_winner(env, genome)
