@@ -32,7 +32,7 @@ if __name__ == "__main__":
                 logs='off'
                 )
 
-        with open('neat_results/winner.pkl', "rb") as f:
+        with open('results/unconnected_results/winner.pkl', "rb") as f:
                 genome = pickle.load(f)
 
         play_winner(env, genome)
