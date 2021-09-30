@@ -121,16 +121,16 @@ def run_neat(path, experiment_name):
     t1 = time.time()
     print(f'\n----- simulation took {np.round((t1-t0)/60,1)} minutes -----\n')
 
-    # plot results
-    plot_fitness(mean_fitness, best_fitness, experiment_name)
+    # # plot results
+    # plot_fitness(mean_fitness, best_fitness, experiment_name)
 
 
 if __name__ == "__main__":
     enemies = [2,4,5]
     for en in enemies:
         experiment_name = f'undirected_pop100_en{en}'
-        if not os.path.exists(f'results/{experiment_name}_results'):
-            os.makedirs(f'results/{experiment_name}_results')
+        if not os.path.exists(f'results/{experiment_name}'):
+            os.makedirs(f'results/{experiment_name}')
         
         # retrieve configuration file
         local_dir = os.path.dirname(__file__)
