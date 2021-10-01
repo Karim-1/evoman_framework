@@ -8,11 +8,19 @@ Use the package manager [pip](https://pip.pypa.io/en/stable/) to install the req
 pip install requirements.txt
 ```
 
-## file usaga
+## file usage
 
-run `neat_algo` to run the 10 experiments
+### SGA
 
-in `plot_functions` different plot functions can be found that were used for the results in the paper
+TBA
+
+### NEAT
+
+run `neat_algo.py` to run the 10 experiments
+
+in `plot_functions.py` different plot functions can be found that were used for the results in the paper
+
+if you want to play with a winning genome of the NEAT algorithm, run `play_winner.py`. Make sure to change to folder to the genome you want to use.
 
 ## results
 
