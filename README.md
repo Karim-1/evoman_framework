@@ -26,6 +26,8 @@ The numpy lists with the mean and max fitness values can be found in `results_SG
 
 In the `results_NEAT` folder, the main results of the 10 simulations can be found in `final_experiment`, furthermore, the results of the different population sizes are in `population_experiment` and the experiment with different initial connections between genome nodes are in `initial_conditions`.
 
+In the `results_SGA` folder, the main results of the 10 simulations can be found, furthermore, in the folder `Parameter experiments`, the results of the experiments with the population size and the number of hidden nodes can be found.
+
 in `plot_functions.py` different plot functions can be found that were used for the results in the paper
 
 In the `plots` folder, the plots used in the report can be found.
