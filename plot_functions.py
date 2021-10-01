@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # use big font size so that it is readable in latex
-matplotlib.rcParams.update({'font.size': 14})
+# matplotlib.rcParams.update({'font.size': 14})
 
 def plot_fitness(mean_fitness, best_fitness, experiment_name):
     generations = range(len(best_fitness))
@@ -56,5 +56,59 @@ def plot_pop_experiment():
 def plot_best(tba):
     pass
 
+
+def plot_final_experiment():
+    generations = range(15)
+    enemies = [2,4,5]
+    colors = ['_', '_', 'blue', '_', 'red', 'black']
+    simulations = [0,1,2,4,5,6,7,8,9]
+    
+    best_fitness = {}
+    mean_fitness = {}
+    
+    best_average_fitness = {}
+    mean_average_fitness = {}
+
+    # add all mean and best fitnesses to lists in the dictionary
+    for en in enemies:
+        best_fitness[en] = []
+        mean_fitness[en] = []
+
+        for i in simulations:
+            best_fitness[en].append(np.load(f'results/final_enemy{en}_{i}/best_fitness.npy'))
+            mean_fitness[en].append(np.load(f'results/final_enemy{en}_{i}/mean_fitness.npy'))
+
+    fig, axs = plt.subplots(2)
+
+    # retrieve average of the 10 runs and plot with confidence interval
+    for en in enemies:
+        best_average_fitness[en] = [np.mean(k) for k in zip(*best_fitness[en])]
+        mean_average_fitness[en] = [np.mean(k) for k in zip(*mean_fitness[en])]
+    
+        ci = 1.96 * np.std(best_average_fitness[en])/np.mean(best_average_fitness[en])
+        axs[0].plot(generations, best_average_fitness[en], color = colors[en])
+        axs[0].fill_between(generations, (best_average_fitness[en]-ci), (best_average_fitness[en]+ci), color='b', alpha=.1)
+        axs[0].grid()
+        axs[0].set_ylim(0,100)
+        axs[0].set_ylabel('Best fitness')
+
+        ci = 1.96 * np.std(mean_average_fitness[en])/np.mean(mean_average_fitness[en])
+        axs[1].plot(generations, mean_average_fitness[en], color = colors[en], label=f'enemy {en}', linestyle = 'dashed')
+        axs[1].fill_between(generations, mean_average_fitness[en]-ci, mean_average_fitness[en]+ci, color='b', alpha=.1)
+        
+    
+    
+    plt.ylim(0,100)
+    plt.ylabel('Mean fitness')
+    plt.xlabel('Generation')
+    # plt.title("Average of mean and best fitness for each enemy in 10 runs")
+    plt.legend()
+    plt.grid()
+    plt.tight_layout()
+    plt.savefig(f'plots/final_experiments_neat')
+    plt.show()
+
+
 if __name__ == "__main__":
-    plot_pop_experiment()
+    # plot_pop_experiment()
+    plot_final_experiment()
