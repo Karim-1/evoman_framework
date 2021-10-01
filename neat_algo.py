@@ -78,8 +78,8 @@ def eval_genomes(genomes, config):
     
 
 # run algorithm
-def run_neat(path, experiment_name):
-    N_GENERATIONS = 25
+def run_neat(config_file, experiment_name, env):
+    N_GENERATIONS = 15
     
     # create NEAT configuration
     config = neat.Config(neat.DefaultGenome, 
@@ -127,34 +127,38 @@ def run_neat(path, experiment_name):
 
 if __name__ == "__main__":
     enemies = [2,4,5]
+    experiment_name = 'final'
+
     for en in enemies:
-        experiment_name = f'undirected_pop150_en{en}'
-        if not os.path.exists(f'results/{experiment_name}'):
-            os.makedirs(f'results/{experiment_name}')
-        
-        # retrieve configuration file
-        local_dir = os.path.dirname(__file__)
-        config_file = os.path.join(local_dir, "neat_config.txt")
+        for i in range(3):
+            experiment_name = 'final_enemy{en}_{i}'
+            # experiment_name = f'undirected_pop100_en{en}'
+            if not os.path.exists(f'results/{experiment_name}'):
+                os.makedirs(f'results/{experiment_name}')
+            
+            # retrieve configuration file
+            local_dir = os.path.dirname(__file__)
+            config_file = os.path.join(local_dir, "neat_config.txt")
 
-        # remove game display
-        os.environ["SDL_VIDEODRIVER"] = "dummy"
-        
-        # initialize environment with NEAT network as player controller
-        env = Environment(
-            experiment_name=experiment_name,
-            enemies=enemies,
-            playermode = 'ai',
-            enemymode='static',
-            sound='off',
-            player_controller=NEAT_controller(),
-            level=2,
-            speed='fastest',
-            logs='off'
-            )
+            # remove game display
+            os.environ["SDL_VIDEODRIVER"] = "dummy"
+            
+            # initialize environment with NEAT network as player controller
+            env = Environment(
+                experiment_name=experiment_name,
+                enemies=[en],
+                playermode = 'ai',
+                enemymode='static',
+                sound='off',
+                player_controller=NEAT_controller(),
+                level=2,
+                speed='fastest',
+                logs='off'
+                )
 
-        # lists to store information for each generation
-        mean_fitness = []
-        best_fitness = []
+            # lists to store information for each generation
+            mean_fitness = []
+            best_fitness = []
 
-        # run experiments
-        run_neat(config_file, experiment_name)
+            # run experiments
+            run_neat(config_file, experiment_name, i)
