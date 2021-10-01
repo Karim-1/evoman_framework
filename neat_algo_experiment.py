@@ -7,7 +7,6 @@ from environment import Environment
 from neat_algo import run_neat
 
 
-experiment_name = 'final'
 enemies = [2,4,5]
 
 for en in enemies:
