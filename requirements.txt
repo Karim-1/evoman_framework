@@ -1,0 +1,7 @@
+deap
+matplotlib
+neat
+numpy
+os
+pickle
+sys
