@@ -130,8 +130,8 @@ if __name__ == "__main__":
     experiment_name = 'final'
 
     for en in enemies:
-        for i in range(4,6,1):
-            experiment_name = 'final_enemy{en}_{i}'
+        for i in range(8,10,1):
+            experiment_name = f'final_enemy{en}_{i}'
             # experiment_name = f'undirected_pop100_en{en}'
             if not os.path.exists(f'results/{experiment_name}'):
                 os.makedirs(f'results/{experiment_name}')
