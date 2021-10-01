@@ -12,8 +12,6 @@ from SGA_controller import player_controller, enemy_controller
 
 import time
 import numpy as np
-from math import fabs,sqrt
-import glob, os
 
 from deap import base
 from deap import creator
@@ -25,28 +23,29 @@ try:
     from collections.abc import Sequence
 except ImportError:
     from collections import Sequence
+    
+from plot_fitness_SGA import plot_fitness
 
 # choose this for not using visuals and thus making experiments faster
 headless = True
 if headless:
     os.environ["SDL_VIDEODRIVER"] = "dummy"
 
-experiment_name = 'SGA'
-if not os.path.exists(experiment_name):
-    os.makedirs(experiment_name)
+experiment_name = 'e5-5'
+if not os.path.exists('results_SGA/'+experiment_name):
+    os.makedirs('results_SGA/'+experiment_name)
 
 n_hidden_neurons = 10
 
 # initializes environment with ai player using random controller, playing against static enemy
-env = Environment(experiment_name=experiment_name,
-                  enemies=[1],
+env = Environment(experiment_name='results_SGA/'+experiment_name,
+                  enemies=[5],
                   level=2,
                   playermode="ai",
                   enemymode="static",
                   speed="fastest",
                   randomini="yes",
-                  player_controller=player_controller(n_hidden_neurons),
-                  #enemy_controller=enemy_controller(n_hidden_neurons)
+                  player_controller=player_controller(n_hidden_neurons)
                   )
 
 start = time.time()
@@ -61,6 +60,9 @@ mut_prob = 0.1
 LB = -1
 UB = 1
 cross_prob = 0.4
+
+best_fitness = []
+mean_fitness = []
 
 def simulate(genome):
     #Simulate one individual
@@ -119,6 +121,30 @@ def main():
     fitnesses = list(map(toolbox.evaluate, pop))
     for individual, fit in zip(pop, fitnesses):
         individual.fitness.values = (fit,)
+        
+    # Apply crossover and mutation on the population
+    for child1, child2 in zip(pop[::2], pop[1::2]):
+        if random.random() < cross_prob:
+            toolbox.mate(child1, child2)
+            del child1.fitness.values
+            del child2.fitness.values
+
+    for mutant in pop:
+        if random.random() < mut_prob:
+            toolbox.mutate(mutant)
+            del mutant.fitness.values
+                
+    # Evaluate the individuals with an invalid fitness
+    invalid_ind = [ind for ind in pop if not ind.fitness.valid]
+    fitnesses = map(toolbox.evaluate, invalid_ind)
+    for ind, fit in zip(invalid_ind, fitnesses):
+        ind.fitness.values = (fit,)
+        
+    fits = [ind.fitness.values[0] for ind in pop]
+        
+    best = np.argmax(fits)
+    overall_best = fits[best]
+    best_genome = pop[best]
     
     for i in range(max_gens):
         # Select the next generation individuals
@@ -126,7 +152,7 @@ def main():
         # Clone the selected individuals
         offspring = list(map(toolbox.clone, offspring))    
         
-         # Apply crossover and mutation on the offspring
+        # Apply crossover and mutation on the offspring
         for child1, child2 in zip(offspring[::2], offspring[1::2]):
             if random.random() < cross_prob:
                 toolbox.mate(child1, child2)
@@ -147,24 +173,30 @@ def main():
         pop[:] = offspring
         fits = [ind.fitness.values[0] for ind in pop]
         
-        
         best = np.argmax(fits)
         std  =  np.std(fits)
         mean = np.mean(fits)
+        
+        best_fitness.append(fits[best])
+        mean_fitness.append(mean)
+        
+        if fits[best] > overall_best:
+            overall_best = fits[best]
+            best_genome = pop[best]
     
         # saves results
-        file_aux  = open(experiment_name+'/results.txt','a')
+        file_aux  = open('results_SGA/'+experiment_name+'/results_SGA.txt','a')
         print( '\n GENERATION '+str(i)+' '+str(round(fits[best],6))+' '+str(round(mean,6))+' '+str(round(std,6)))
         file_aux.write('\n'+str(i)+' '+str(round(fits[best],6))+' '+str(round(mean,6))+' '+str(round(std,6))   )
         file_aux.close()
     
         # saves generation number
-        file_aux  = open(experiment_name+'/gen.txt','w')
+        file_aux  = open('results_SGA/'+experiment_name+'/gen.txt','w')
         file_aux.write(str(i))
         file_aux.close()
     
-        # saves file with the best solution
-        np.savetxt(experiment_name+'/best.txt',pop[best])
+        # saves file with the best solution of this generation
+        np.savetxt('results_SGA/'+experiment_name+'/best.txt',pop[best])
     
         # saves simulation state
         solutions = [pop, fits]
@@ -175,8 +207,16 @@ def main():
     end = time.time() # prints total execution time for experiment
     print( '\nExecution time: '+str(round((end-start)/60))+' minutes \n')
     
+    plot_fitness(mean_fitness, best_fitness, 'results_SGA/'+experiment_name+'/plot_'+experiment_name)
     
-    file = open(experiment_name+'/neuroended', 'w')  # saves control (simulation has ended) file for bash loop file
+    np.save('results_SGA/'+experiment_name+'/mean_fitness', mean_fitness)
+    np.save('results_SGA/'+experiment_name+'/best_fitness', best_fitness)
+    
+    # saves file with the overall solution
+    np.savetxt('results_SGA/'+experiment_name+'/overall_best.txt',best_genome)
+    np.save('results_SGA/'+experiment_name+'/overall_best', best_genome)
+    
+    file = open('results_SGA/'+experiment_name+'/neuroended', 'w')  # saves control (simulation has ended) file for bash loop file
     file.close()
     
     
