@@ -112,7 +112,7 @@ toolbox.register("attr_uni", random.uniform, -1, 1)
 toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_uni, n_vars)
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 toolbox.register("evaluate", simulate)
-toolbox.register("mate", tools.cxTwoPoint)
+toolbox.register("crossover", tools.cxTwoPoint)
 toolbox.register("mutate", mutUniformFloat, low=LB, up=UB, indpb=0.05)
 toolbox.register("select", tools.selTournament, tournsize=3)
 
@@ -125,7 +125,7 @@ def main():
     # Apply crossover and mutation on the population
     for child1, child2 in zip(pop[::2], pop[1::2]):
         if random.random() < cross_prob:
-            toolbox.mate(child1, child2)
+            toolbox.crossover(child1, child2)
             del child1.fitness.values
             del child2.fitness.values
 
@@ -155,7 +155,7 @@ def main():
         # Apply crossover and mutation on the offspring
         for child1, child2 in zip(offspring[::2], offspring[1::2]):
             if random.random() < cross_prob:
-                toolbox.mate(child1, child2)
+                toolbox.crossover(child1, child2)
                 del child1.fitness.values
                 del child2.fitness.values
 
