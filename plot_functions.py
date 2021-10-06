@@ -14,7 +14,7 @@ def plot_fitness(mean_fitness, best_fitness, experiment_name):
     plt.xlabel('Generation')
     plt.title("Population's average and best fitness")
     plt.grid()
-    plt.tightlayout()
+    plt.tight_layout()
     plt.legend()
     plt.savefig(f'plots/{experiment_name}_fitness_plot')
     plt.show()
