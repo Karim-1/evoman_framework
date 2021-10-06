@@ -10,6 +10,5 @@ def plot_fitness(mean_fitness, best_fitness, name):
     axs[1].set_ylabel('Mean fitness')
     
     # plt.legend()
-    plt.savefig(name+'.eps')
-    plt.savefig(name+'.jpg')
+    plt.savefig(name+'.png')
     plt.show()
