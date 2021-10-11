@@ -28,46 +28,94 @@ except ImportError:
 
 
 
-def simulate(genome):
-    #Simulate one individual
-    f,p,e,t = env.play(pcont = genome)
-    return f
+def evaluate(genome):
+    # simulate one individual
+    fitness,_,_,_ = env.play(pcont = genome)
+    return fitness
     
 def selection(population):
-    #Select best individual among tournsize groups, k times
+    # select best individual among tournsize groups, k times
     return tools.selTournament(pop = population, k = MU, tournsize = 10, fit_attr='fitness')
 
-def mutGaussian(individual, mu, sigma, indpb):
-    # taken from https://github.com/DEAP/deap/blob/master/deap/tools/mutation.py
-    """This function applies a gaussian mutation of mean *mu* and standard
-    deviation *sigma* on the input individual. This mutation expects a
-    :term:`sequence` individual composed of real valued attributes.
-    The *indpb* argument is the probability of each attribute to be mutated.
-    :param individual: Individual to be mutated.
-    :param mu: Mean or :term:`python:sequence` of means for the
-               gaussian addition mutation.
-    :param sigma: Standard deviation or :term:`python:sequence` of
-                  standard deviations for the gaussian addition mutation.
-    :param indpb: Independent probability for each attribute to be mutated.
-    :returns: A tuple of one individual.
-    This function uses the :func:`~random.random` and :func:`~random.gauss`
-    functions from the python base :mod:`random` module.
-    """
-    size = len(individual)
-    if not isinstance(mu, Sequence):
-        mu = repeat(mu, size)
-    elif len(mu) < size:
-        raise IndexError("mu must be at least the size of individual: %d < %d" % (len(mu), size))
-    if not isinstance(sigma, Sequence):
-        sigma = repeat(sigma, size)
-    elif len(sigma) < size:
-        raise IndexError("sigma must be at least the size of individual: %d < %d" % (len(sigma), size))
+# def mutGaussian(individual, mu, sigma, indpb):
+#     # taken from https://github.com/DEAP/deap/blob/master/deap/tools/mutation.py
+#     """This function applies a gaussian mutation of mean *mu* and standard
+#     deviation *sigma* on the input individual. This mutation expects a
+#     :term:`sequence` individual composed of real valued attributes.
+#     The *indpb* argument is the probability of each attribute to be mutated.
+#     :param individual: Individual to be mutated.
+#     :param mu: Mean or :term:`python:sequence` of means for the
+#                gaussian addition mutation.
+#     :param sigma: Standard deviation or :term:`python:sequence` of
+#                   standard deviations for the gaussian addition mutation.
+#     :param indpb: Independent probability for each attribute to be mutated.
+#     :returns: A tuple of one individual.
+#     This function uses the :func:`~random.random` and :func:`~random.gauss`
+#     functions from the python base :mod:`random` module.
+#     """
+#     size = len(individual)
+#     if not isinstance(mu, Sequence):
+#         mu = repeat(mu, size)
+#     elif len(mu) < size:
+#         raise IndexError("mu must be at least the size of individual: %d < %d" % (len(mu), size))
+#     if not isinstance(sigma, Sequence):
+#         sigma = repeat(sigma, size)
+#     elif len(sigma) < size:
+#         raise IndexError("sigma must be at least the size of individual: %d < %d" % (len(sigma), size))
 
-    for i, m, s in zip(range(size), mu, sigma):
-        if random.random() < indpb:
-            individual[i] += random.gauss(m, s)
+#     for i, m, s in zip(range(size), mu, sigma):
+#         if random.random() < indpb:
+#             individual[i] += random.gauss(m, s)
 
-    return individual,
+#     return individual,
+
+def eaMuPlusLambda(population, toolbox, mu, lambda_, cxpb, mutpb, ngen,
+                        stats=None, halloffame=None, verbose=__debug__):
+    '''
+    copied from the DEAP library with minor adjustments (line 147 only)
+    '''
+    logbook = tools.Logbook()
+    logbook.header = ['gen', 'nevals'] + (stats.fields if stats else [])
+
+    # Evaluate the individuals with an invalid fitness
+    invalid_ind = [ind for ind in population if not ind.fitness.valid]
+    fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
+    for ind, fit in zip(invalid_ind, fitnesses):
+        ind.fitness.values = fit
+
+    if halloffame is not None:
+        halloffame.update(population)
+
+    record = stats.compile(population) if stats is not None else {}
+    logbook.record(gen=0, nevals=len(invalid_ind), **record)
+    if verbose:
+        print(logbook.stream)
+
+    # Begin the generational process
+    for gen in range(1, ngen + 1):
+        # Vary the population
+        offspring = algorithms.varOr(population, toolbox, lambda_, cxpb, mutpb)
+
+        # Evaluate the individuals with an invalid fitness
+        invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
+        fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
+        for ind, fit in zip(invalid_ind, fitnesses):
+            ind.fitness.values = (fit,)
+
+        # Update the hall of fame with the generated individuals
+        if halloffame is not None:
+            halloffame.update(offspring)
+
+        # Select the next generation population
+        population[:] = toolbox.select(population + offspring, mu)
+
+        # Update the statistics with the new population
+        record = stats.compile(population) if stats is not None else {}
+        logbook.record(gen=gen, nevals=len(invalid_ind), **record)
+        if verbose:
+            print(logbook.stream)
+
+    return population, logbook
     
 
     
@@ -83,7 +131,7 @@ if __name__=="__main__":
         os.makedirs('results_ES/'+experiment_name)
 
     n_hidden_neurons = 10
-    enemies = [1,2,3]
+    enemies = [7,8]
 
     # initializes environment with ai player using random controller, playing against static enemy
     env = Environment(experiment_name='results_ES/'+experiment_name,
@@ -98,58 +146,84 @@ if __name__=="__main__":
                     logs='off'
                     )
 
-    # def my_const_multi(self, values):
-    #     return values.mean()
+    def my_const_multi(values):
+        return values.mean()
     
-    # env.cons_multi = my_const_multi(values)
+    env.cons_multi = my_const_multi
     
-    start = time.time()
+    t0 = time.time()
 
     # number of weights for multilayer with 10 hidden neurons
     n_vars = (env.get_num_sensors()+1)*n_hidden_neurons + (n_hidden_neurons+1)*5
 
     #initialize other variables
-    MU, LAMBDA = 10, 20
+    MUs= range(25,101,25)
+    LAMBDAs = range(25,101,25)
+    
     SIGMA = 1.5
-    ngen = 5
+    ngen = 10
     mutpb = 0.2 # mutation probability
     LB = -1
     UB = 1
     cxpb = 0.4 # crossing probability
 
-    # create deap functions
-    toolbox = base.Toolbox()
-    # hof = tools.ParetoFront()
     creator.create("FitnessMax", base.Fitness, weights=(1.0,))
     creator.create("Individual", list, fitness=creator.FitnessMax)
-    toolbox.register("attr_uni", random.uniform, -1, 1)
-    toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_uni, n_vars)
-    toolbox.register("population", tools.initRepeat, list, toolbox.individual)
-    toolbox.register("evaluate", simulate)
-    toolbox.register("crossover", tools.cxTwoPoint)
-    toolbox.register("mutate", mutGaussian, mu=MU, sigma=SIGMA, indpb=0.05)
-    toolbox.register("select", tools.selTournament, tournsize=3)
-    toolbox.register("mate", tools.cxTwoPoint)
-    
-    # create statistics functions
-    stats = tools.Statistics(lambda ind: ind.fitness.values)
-    stats.register("avg", np.mean, axis=0)
-    stats.register("std", np.std, axis=0)
-    stats.register("min", np.min, axis=0)
-    stats.register("max", np.max, axis=0)
 
-    # create population
-    pop = toolbox.population(n=MU)
+    final_list = []
+    for MU in MUs:
+        max_fitnesses = []
+        for LAMBDA in LAMBDAs:
+            start_time = time.time()
+            print(f'\n----- Running mu = {MU}, lambda = {LAMBDA} -----')    
 
-    fitnesses = list(map(toolbox.evaluate, pop))
-    for individual, fit in zip(pop, fitnesses):
-        individual.fitness.values = (fit,)
+            # create deap functions
+            toolbox = base.Toolbox()
+            hof = tools.ParetoFront()
+            
+            toolbox.register("attr_uni", random.uniform, -1, 1)
+            toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_uni, n_vars)
+            toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+            toolbox.register("evaluate", evaluate)
+            toolbox.register("crossover", tools.cxTwoPoint)
+            toolbox.register("mutate", tools.mutGaussian, mu=MU, sigma=SIGMA, indpb=0.05)
+            toolbox.register("select", tools.selTournament, tournsize=3)
+            toolbox.register("mate", tools.cxTwoPoint)
+            
+            # create statistics functions
+            stats = tools.Statistics(lambda ind: ind.fitness.values)
+            stats.register("avg", np.mean, axis=0)
+            stats.register("std", np.std, axis=0)
+            stats.register("min", np.min, axis=0)
+            stats.register("max", np.max, axis=0)
 
-    # best_fitness, mean_fitness = [], []
-    
-    algorithms.eaMuPlusLambda(pop, toolbox, MU, LAMBDA, cxpb, mutpb, ngen,
-                              stats)
-                                  
+            # create population
+            pop = toolbox.population(n=MU)
+
+            fitnesses = list(map(toolbox.evaluate, pop))
+            for individual, fit in zip(pop, fitnesses):
+                individual.fitness.values = (fit,)
+
+
+            # best_fitness, mean_fitness = [], []
+            population, logbook =  eaMuPlusLambda(pop, toolbox, MU, LAMBDA, cxpb, mutpb, ngen, stats)
+
+            # print(population)
+            record = stats.compile(pop)
+            max_fitnesses.append(record['max'][0])
+
+            end_time = time.time()
+            print(f'Sim run took {round((end_time-start_time)/60, 2)} minutes')
+
+            final_list.append(max_fitnesses)
+            
+    np.savetxt(f'results_ES/{experiment_name}/max_fitnesses.csv', final_list, delimiter=',')
+
+
+    t1 = time.time()
+
+    print(f'\n---------- Simulation took {round((t1-t0)/60, 2)} minutes-------------------')
+
  
         
     # # Apply crossover and mutation on the population
