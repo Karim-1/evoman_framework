@@ -37,37 +37,37 @@ def selection(population):
     #Select best individual among tournsize groups, k times
     return tools.selTournament(pop = population, k = MU, tournsize = 10, fit_attr='fitness')
 
-def mutUniformFloat(individual, low, up, indpb):
-    #Adapted from mutUniformInt from the deap library
-    #https://github.com/DEAP/deap/blob/master/deap/tools/mutation.py
-    """
-    Mutate an individual by replacing attributes, with probability *indpb*,
-    by a integer uniformly drawn between *low* and *up* inclusively.
-    :param individual: :term:`Sequence <sequence>` individual to be mutated.
-    :param low: The lower bound or a :term:`python:sequence` of
-                of lower bounds of the range from which to draw the new
-                float.
-    :param up: The upper bound or a :term:`python:sequence` of
-               of upper bounds of the range from which to draw the new
-               float.
+def mutGaussian(individual, mu, sigma, indpb):
+    # taken from https://github.com/DEAP/deap/blob/master/deap/tools/mutation.py
+    """This function applies a gaussian mutation of mean *mu* and standard
+    deviation *sigma* on the input individual. This mutation expects a
+    :term:`sequence` individual composed of real valued attributes.
+    The *indpb* argument is the probability of each attribute to be mutated.
+    :param individual: Individual to be mutated.
+    :param mu: Mean or :term:`python:sequence` of means for the
+               gaussian addition mutation.
+    :param sigma: Standard deviation or :term:`python:sequence` of
+                  standard deviations for the gaussian addition mutation.
     :param indpb: Independent probability for each attribute to be mutated.
     :returns: A tuple of one individual.
+    This function uses the :func:`~random.random` and :func:`~random.gauss`
+    functions from the python base :mod:`random` module.
     """
     size = len(individual)
-    if not isinstance(low, Sequence):
-        low = repeat(low, size)
-    elif len(low) < size:
-        raise IndexError("low must be at least the size of individual: %d < %d" % (len(low), size))
-    if not isinstance(up, Sequence):
-        up = repeat(up, size)
-    elif len(up) < size:
-        raise IndexError("up must be at least the size of individual: %d < %d" % (len(up), size))
+    if not isinstance(mu, Sequence):
+        mu = repeat(mu, size)
+    elif len(mu) < size:
+        raise IndexError("mu must be at least the size of individual: %d < %d" % (len(mu), size))
+    if not isinstance(sigma, Sequence):
+        sigma = repeat(sigma, size)
+    elif len(sigma) < size:
+        raise IndexError("sigma must be at least the size of individual: %d < %d" % (len(sigma), size))
 
-    for i, xl, xu in zip(range(size), low, up):
+    for i, m, s in zip(range(size), mu, sigma):
         if random.random() < indpb:
-            individual[i] = random.uniform(xl, xu)
+            individual[i] += random.gauss(m, s)
 
-    return individual
+    return individual,
     
 
     
@@ -94,7 +94,8 @@ if __name__=="__main__":
                     enemymode="static",
                     speed="fastest",
                     randomini="yes",
-                    player_controller=player_controller(n_hidden_neurons)
+                    player_controller=player_controller(n_hidden_neurons),
+                    logs='off'
                     )
 
     # def my_const_multi(self, values):
@@ -108,8 +109,9 @@ if __name__=="__main__":
     n_vars = (env.get_num_sensors()+1)*n_hidden_neurons + (n_hidden_neurons+1)*5
 
     #initialize other variables
-    MU, LAMBDA = 100, 200
-    ngen = 15
+    MU, LAMBDA = 10, 20
+    SIGMA = 1.5
+    ngen = 5
     mutpb = 0.2 # mutation probability
     LB = -1
     UB = 1
@@ -117,17 +119,17 @@ if __name__=="__main__":
 
     # create deap functions
     toolbox = base.Toolbox()
-    hof = tools.ParetoFront()
+    # hof = tools.ParetoFront()
     creator.create("FitnessMax", base.Fitness, weights=(1.0,))
-    print('basefitness', base.Fitness)
     creator.create("Individual", list, fitness=creator.FitnessMax)
     toolbox.register("attr_uni", random.uniform, -1, 1)
     toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_uni, n_vars)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
     toolbox.register("evaluate", simulate)
     toolbox.register("crossover", tools.cxTwoPoint)
-    toolbox.register("mutate", mutUniformFloat, low=LB, up=UB, indpb=0.05)
+    toolbox.register("mutate", mutGaussian, mu=MU, sigma=SIGMA, indpb=0.05)
     toolbox.register("select", tools.selTournament, tournsize=3)
+    toolbox.register("mate", tools.cxTwoPoint)
     
     # create statistics functions
     stats = tools.Statistics(lambda ind: ind.fitness.values)
@@ -146,7 +148,8 @@ if __name__=="__main__":
     # best_fitness, mean_fitness = [], []
     
     algorithms.eaMuPlusLambda(pop, toolbox, MU, LAMBDA, cxpb, mutpb, ngen,
-                              stats, halloffame=hof)
+                              stats)
+                                  
  
         
     # # Apply crossover and mutation on the population
