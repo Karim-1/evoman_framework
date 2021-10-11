@@ -31,12 +31,15 @@ headless = True
 if headless:
     os.environ["SDL_VIDEODRIVER"] = "dummy"
 
-experiment_name = 'test_task2'
+experiment_name = 'en[2,5,6]_min'
 if not os.path.exists('results_SGA2/'+experiment_name):
     os.makedirs('results_SGA2/'+experiment_name)
 
 n_hidden_neurons = 10
-enemies = [1,2,3]
+enemies = [2,5,6]
+
+def my_cons_multi(values):
+    return values.min()
 
 # initializes environment with ai player using random controller, playing against static enemy
 env = Environment(experiment_name='results_SGA2/'+experiment_name,
@@ -50,6 +53,8 @@ env = Environment(experiment_name='results_SGA2/'+experiment_name,
                   player_controller=player_controller(n_hidden_neurons)
                   )
 
+env.cons_multi = my_cons_multi
+
 start = time.time()
 
 # number of weights for multilayer with 10 hidden neurons
@@ -57,7 +62,7 @@ n_vars = (env.get_num_sensors()+1)*n_hidden_neurons + (n_hidden_neurons+1)*5
 
 #initialize other variables
 npop = 100
-max_gens = 15
+max_gens = 10
 mut_prob = 0.1
 LB = -1
 UB = 1
