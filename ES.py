@@ -10,6 +10,7 @@ sys.path.insert(0, 'evoman')
 from environment import Environment
 from SGA_controller import player_controller, enemy_controller
 
+
 import csv
 import numpy as np
 import random
@@ -19,7 +20,7 @@ from deap import algorithms
 from deap import base
 from deap import creator
 from deap import tools
-
+from objproxies import CallbackProxy
 
 from itertools import repeat
 try:
@@ -32,6 +33,7 @@ except ImportError:
 def evaluate(genome):
     # simulate one individual
     fitness,_,_,_ = env.play(pcont = genome)
+    
     return fitness
     
 def selection(population):
@@ -39,11 +41,13 @@ def selection(population):
     return tools.selTournament(pop = population, k = MU, tournsize = 10, fit_attr='fitness')
 
 
+
 def eaMuPlusLambda(population, toolbox, mu, lambda_, cxpb, mutpb, ngen,
                         stats=None, halloffame=None, verbose=__debug__):
     '''
     copied from the DEAP library with minor adjustments (line 147 only)
     '''
+    global gen_nr
     logbook = tools.Logbook()
     logbook.header = ['gen', 'nevals'] + (stats.fields if stats else [])
 
@@ -84,6 +88,8 @@ def eaMuPlusLambda(population, toolbox, mu, lambda_, cxpb, mutpb, ngen,
         logbook.record(gen=gen, nevals=len(invalid_ind), **record)
         if verbose:
             print(logbook.stream)
+            
+        gen_nr += 1
 
     return population, logbook
     
@@ -96,12 +102,12 @@ if __name__=="__main__":
         os.environ["SDL_VIDEODRIVER"] = "dummy"
 
     # create folder
-    experiment_name = 'ngen100_mu50_sigma100'
+    experiment_name = 'mutpb_experiment_gradual'
     if not os.path.exists('results_ES/'+experiment_name):
         os.makedirs('results_ES/'+experiment_name)
 
     n_hidden_neurons = 10
-    enemies = [7,8]
+    enemies = [2,5,6]
 
     # initializes environment with ai player using random controller, playing against static enemy
     env = Environment(experiment_name='results_ES/'+experiment_name,
@@ -127,11 +133,15 @@ if __name__=="__main__":
     n_vars = (env.get_num_sensors()+1)*n_hidden_neurons + (n_hidden_neurons+1)*5
 
     #initialize other variables
-    MU= 5
-    LAMBDA = 10
+    MU= 50
+    LAMBDA = 25
     
     SIGMA = 1.5
-    ngen = 2
+    ngen = 20
+
+    gen_nr = 1 # define generation nr for mutation probability
+    evals = 0 # define nr of evals to count gen number
+
     mutpb = 0.2 # mutation probability
     LB = -1
     UB = 1
@@ -145,12 +155,14 @@ if __name__=="__main__":
     # create deap functions
     toolbox = base.Toolbox()
     
+    # register toolbox function
     toolbox.register("attr_uni", random.uniform, -1, 1)
     toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_uni, n_vars)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
     toolbox.register("evaluate", evaluate)
     toolbox.register("crossover", tools.cxTwoPoint)
-    toolbox.register("mutate", tools.mutGaussian, mu=MU, sigma=SIGMA, indpb=0.05)
+    toolbox.register("mutate", tools.mutGaussian, mu=MU, sigma=SIGMA, indpb=CallbackProxy(lambda: .9**gen_nr))
+    # toolbox.register("mutate", tools.mutGaussian, mu=MU, sigma=SIGMA, indpb=.05)
     toolbox.register("select", tools.selTournament, tournsize=3)
     toolbox.register("mate", tools.cxTwoPoint)
     
@@ -162,34 +174,33 @@ if __name__=="__main__":
     stats.register("max", np.max, axis=0)
 
     # create population
-    pop = toolbox.population(n=MU)
+    pop = toolbox.population(n=LAMBDA)
 
     fitnesses = list(map(toolbox.evaluate, pop))
+    
     for individual, fit in zip(pop, fitnesses):
         individual.fitness.values = (fit,)
 
 
     # best_fitness, mean_fitness = [], []
-    population, logbook =  eaMuPlusLambda(pop, toolbox, MU, LAMBDA, cxpb, mutpb, ngen, stats)
+    population, log =  eaMuPlusLambda(pop, toolbox, MU, LAMBDA, cxpb, mutpb, ngen, stats)
 
     # print(population)
-    record = stats.compile(pop)
-    print(stats)
-
-    # print('Results:\n', record)
-    print('\nMax fitness:\n:', record['max'][0])
+    print(log.select("avg"))
+    print(log.select("max"))
+    np.savez(f'results_ES/f{experiment_name}', name1=log.select("avg"), name2=log.select("max"), name3=log.select("std"))
 
     t1 = time.time()
 
     print(f'\n------------------- Simulation took {round((t1-t0)/60, 2)} minutes -------------------')
 
-    csvfile = f'results_ES/{experiment_name}/results.csv'
-    csv_columns = record.keys()
-    with open(csvfile) as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=csv_columns)
-        # writer.writeheader()
-        for key in record:
-            writer.writerow(record[key])
+    # csvfile = f'results_ES/{experiment_name}/results.csv'
+    # csv_columns = record.keys()
+    # with open(csvfile) as csvfile:
+    #     writer = csv.DictWriter(csvfile, fieldnames=csv_columns)
+    #     # writer.writeheader()
+    #     for key in record:
+    #         writer.writerow(record[key])
     
     env.state_to_log()
     
