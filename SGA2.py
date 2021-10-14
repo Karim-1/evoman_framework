@@ -31,18 +31,19 @@ headless = True
 if headless:
     os.environ["SDL_VIDEODRIVER"] = "dummy"
 
-experiment_name = 'en[2,5,6]_min'
-if not os.path.exists('results_SGA2/'+experiment_name):
-    os.makedirs('results_SGA2/'+experiment_name)
+experiment_name = 'en[2,5,6]-5'
+path = 'results_SGA2/2point_uni_roul_'
+if not os.path.exists(path+experiment_name):
+    os.makedirs(path+experiment_name)
 
 n_hidden_neurons = 10
 enemies = [2,5,6]
 
 def my_cons_multi(values):
-    return values.min()
+    return values.mean()
 
 # initializes environment with ai player using random controller, playing against static enemy
-env = Environment(experiment_name='results_SGA2/'+experiment_name,
+env = Environment(experiment_name=path+experiment_name,
                   multiplemode='yes',
                   enemies=enemies,
                   level=2,
@@ -50,7 +51,8 @@ env = Environment(experiment_name='results_SGA2/'+experiment_name,
                   enemymode="static",
                   speed="fastest",
                   randomini="yes",
-                  player_controller=player_controller(n_hidden_neurons)
+                  player_controller=player_controller(n_hidden_neurons),
+                  savelogs="no"
                   )
 
 env.cons_multi = my_cons_multi
@@ -61,12 +63,13 @@ start = time.time()
 n_vars = (env.get_num_sensors()+1)*n_hidden_neurons + (n_hidden_neurons+1)*5
 
 #initialize other variables
-npop = 100
-max_gens = 10
+npop = 50
+max_gens = 20
 mut_prob = 0.1
 LB = -1
 UB = 1
 cross_prob = 0.4
+tourn_size = 3
 
 best_fitness = []
 mean_fitness = []
@@ -75,10 +78,7 @@ def simulate(genome):
     #Simulate one individual
     f,p,e,t = env.play(pcont = genome)
     return f
-    
-def selection(population):
-    #Select best individual among tournsize groups, k times
-    return tools.selTournament(pop = population, k = npop, tournsize = 10, fit_attr='fitness')
+
 
 def mutUniformFloat(individual, low, up, indpb):
     #Adapted from mutUniformInt from the deap library
@@ -115,13 +115,13 @@ def mutUniformFloat(individual, low, up, indpb):
 toolbox = base.Toolbox()
 creator.create("FitnessMax", base.Fitness, weights=(1.0,))
 creator.create("Individual", list, fitness=creator.FitnessMax)
-toolbox.register("attr_uni", random.uniform, -1, 1)
+toolbox.register("attr_uni", random.uniform, LB, UB)
 toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_uni, n_vars)
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 toolbox.register("evaluate", simulate)
 toolbox.register("crossover", tools.cxTwoPoint)
 toolbox.register("mutate", mutUniformFloat, low=LB, up=UB, indpb=0.05)
-toolbox.register("select", tools.selTournament, tournsize=3)
+toolbox.register("select", tools.selRoulette)#, tournsize=tourn_size)
 
 def main():
     pop = toolbox.population(n=npop)
@@ -192,18 +192,18 @@ def main():
             best_genome = pop[best]
     
         # saves results
-        file_aux  = open('results_SGA2/'+experiment_name+'/results_SGA2.txt','a')
+        file_aux  = open(path+experiment_name+'/results_SGA2.txt','a')
         print( '\n GENERATION '+str(i)+' '+str(round(fits[best],6))+' '+str(round(mean,6))+' '+str(round(std,6)))
         file_aux.write('\n'+str(i)+' '+str(round(fits[best],6))+' '+str(round(mean,6))+' '+str(round(std,6))   )
         file_aux.close()
     
         # saves generation number
-        file_aux  = open('results_SGA2/'+experiment_name+'/gen.txt','w')
+        file_aux  = open(path+experiment_name+'/gen.txt','w')
         file_aux.write(str(i))
         file_aux.close()
     
         # saves file with the best solution of this generation
-        np.savetxt('results_SGA2/'+experiment_name+'/best.txt',pop[best])
+        np.savetxt(path+experiment_name+'/best.txt',pop[best])
     
         # saves simulation state
         solutions = [pop, fits]
@@ -214,16 +214,16 @@ def main():
     end = time.time() # prints total execution time for experiment
     print( '\nExecution time: '+str(round((end-start)/60))+' minutes \n')
     
-    plot_fitness(mean_fitness, best_fitness, 'results_SGA2/'+experiment_name+'/plot_'+experiment_name)
+    plot_fitness(mean_fitness, best_fitness, path+experiment_name+'/plot_'+experiment_name)
     
-    np.save('results_SGA2/'+experiment_name+'/mean_fitness', mean_fitness)
-    np.save('results_SGA2/'+experiment_name+'/best_fitness', best_fitness)
+    np.save(path+experiment_name+'/mean_fitness', mean_fitness)
+    np.save(path+experiment_name+'/best_fitness', best_fitness)
     
     # saves file with the overall solution
-    np.savetxt('results_SGA2/'+experiment_name+'/overall_best.txt',best_genome)
-    np.save('results_SGA2/'+experiment_name+'/overall_best', best_genome)
+    np.savetxt(path+experiment_name+'/overall_best.txt',best_genome)
+    np.save(path+experiment_name+'/overall_best', best_genome)
     
-    file = open('results_SGA2/'+experiment_name+'/neuroended', 'w')  # saves control (simulation has ended) file for bash loop file
+    file = open(path+experiment_name+'/neuroended', 'w')  # saves control (simulation has ended) file for bash loop file
     file.close()
     
     
