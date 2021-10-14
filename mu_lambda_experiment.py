@@ -32,7 +32,6 @@ def evaluate(genome):
     # simulate one individual
     fitness,_,_,_ = env.play(pcont = genome)
     return fitness
-
     
 def selection(population):
     # select best individual among tournsize groups, k times
