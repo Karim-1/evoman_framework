@@ -31,8 +31,8 @@ headless = True
 if headless:
     os.environ["SDL_VIDEODRIVER"] = "dummy"
 
-experiment_name = 'en[2,5,6]-5'
-path = 'results_SGA2/2point_uni_roul_'
+experiment_name = 'en[2,5,6]-10'
+path = 'results_SGA2/uni_uni_roul_'
 if not os.path.exists(path+experiment_name):
     os.makedirs(path+experiment_name)
 
@@ -119,7 +119,7 @@ toolbox.register("attr_uni", random.uniform, LB, UB)
 toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_uni, n_vars)
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 toolbox.register("evaluate", simulate)
-toolbox.register("crossover", tools.cxTwoPoint)
+toolbox.register("crossover", tools.cxUniform, indpb=0.05)
 toolbox.register("mutate", mutUniformFloat, low=LB, up=UB, indpb=0.05)
 toolbox.register("select", tools.selRoulette)#, tournsize=tourn_size)
 
