@@ -31,8 +31,8 @@ headless = True
 if headless:
     os.environ["SDL_VIDEODRIVER"] = "dummy"
 
-experiment_name = 'en[2,5,6]-10'
-path = 'results_SGA2/uni_uni_roul_'
+experiment_name = 'en[2,5,6]-1'
+path = 'results_SGA2/'
 if not os.path.exists(path+experiment_name):
     os.makedirs(path+experiment_name)
 
@@ -63,8 +63,8 @@ start = time.time()
 n_vars = (env.get_num_sensors()+1)*n_hidden_neurons + (n_hidden_neurons+1)*5
 
 #initialize other variables
-npop = 50
-max_gens = 20
+npop = 75
+max_gens = 30
 mut_prob = 0.1
 LB = -1
 UB = 1
@@ -119,9 +119,9 @@ toolbox.register("attr_uni", random.uniform, LB, UB)
 toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_uni, n_vars)
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 toolbox.register("evaluate", simulate)
-toolbox.register("crossover", tools.cxUniform, indpb=0.05)
+toolbox.register("crossover", tools.cxTwoPoint)
 toolbox.register("mutate", mutUniformFloat, low=LB, up=UB, indpb=0.05)
-toolbox.register("select", tools.selRoulette)#, tournsize=tourn_size)
+toolbox.register("select", tools.selTournament, tournsize=tourn_size)
 
 def main():
     pop = toolbox.population(n=npop)
