@@ -13,6 +13,7 @@ from SGA_controller import player_controller, enemy_controller
 
 import csv
 import numpy as np
+import pickle
 import random
 import time
 
@@ -104,12 +105,12 @@ if __name__=="__main__":
         os.environ["SDL_VIDEODRIVER"] = "dummy"
 
     # create folder
-    experiment_name ='en[2,5,6]'
+    experiment_name ='en[7,8]'
     if not os.path.exists('results_ES/'+experiment_name):
         os.makedirs('results_ES/'+experiment_name)
 
     n_hidden_neurons = 10
-    enemies = [2,5,6]
+    enemies = [7,8]
 
     # initializes environment with ai player using random controller, playing against static enemy
     env = Environment(experiment_name='results_ES/'+experiment_name,
@@ -132,14 +133,14 @@ if __name__=="__main__":
     n_vars = (env.get_num_sensors()+1)*n_hidden_neurons + (n_hidden_neurons+1)*5
 
     #initialize other variables
+    ngen = 20
     LAMBDA = 75 # population size
     MU = 75 # offspring
     cxpb = 0.4 # crossing probability
     mutpb = 0.2 # mutation probability
     LB = -1
     UB = 1    
-    SIGMA = 1.5 # for the gaussian distribution
-    ngen = 20
+    SIGMA = 1 # for the gaussian distribution
     gen_nr = 1 # define generation nr for mutation probability
     
 
@@ -169,7 +170,9 @@ if __name__=="__main__":
 
     overall_best = 0
 
+    # lists to store information for each generation
     for i in range(10):   
+        start = time.time()
         print(f'\n----- Running mu = {MU}, lambda = {LAMBDA}, ngen = {ngen}, round = {i} -----')   
         #  create population
         pop = toolbox.population(n=LAMBDA)
@@ -183,19 +186,28 @@ if __name__=="__main__":
         pop, log =  eaMuPlusLambda(pop, toolbox, MU, LAMBDA, cxpb, mutpb, ngen, stats)
 
         best = np.argmax(fitnesses)
-        record = stats.compile(pop)
+        print(best)
+        best_genome = pop[best]
 
-        max_fit = round(np.max(fitnesses),2)
-        if max_fit > overall_best:
-            overall_best = max_fit
-            fits = [round(x,2) for x in fitnesses]
-            best = np.where(fits == max_fit)
-            best_genome = pop[best[0][0]]
-            np.savetxt('results_ES/'+experiment_name+'/best.txt',best_genome) # saving just to be sure
-            np.save('results_ES/'+experiment_name+'/overall_best', best_genome)
+        
+        # avg, std, max_ = log.select("avg", "std", "max")
 
-    np.savetxt('results_ES/'+experiment_name+'/best.txt',best_genome)
-    np.save('results_ES/'+experiment_name+'/overall_best', best_genome)
+        np.savetxt(f'results_ES/{experiment_name}/best{i}.txt',best_genome)
+        np.save(f'results_ES/{experiment_name}/overall_best{i}', best_genome)
+
+
+        with open(f"results_ES/{experiment_name}/log.pkl", "wb") as f:
+            pickle.dump(log, f)
+            f.close()
+        # np.save('results_ES/'+experiment_name+'/mean'+i, mean)
+        # np.save('results_ES/'+experiment_name+'/max'+i, max_)
+        # np.save('results_ES/'+experiment_name+'/std'+i, std)
+        # record = stats.compile(pop)
+
+        stop = time.time()
+        print(f'\n------- Round took {round((stop-start)/60, 2)} minutes ----------')
+
+    
 
     t1 = time.time()
 
