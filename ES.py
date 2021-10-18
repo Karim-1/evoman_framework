@@ -174,7 +174,7 @@ if __name__=="__main__":
 
     # lists to store information for each generation
     # for i in range(10):   
-    for i in range(5,10,1):   
+    for i in [4]:   
         start = time.time()
         print(f'\n----- Running mu = {MU}, lambda = {LAMBDA}, ngen = {ngen}, round = {i} -----')   
         #  create population

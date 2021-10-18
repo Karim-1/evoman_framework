@@ -85,9 +85,10 @@ def plot_ES():
     
 
 def plot_final_experiment():
-    generations = range(15)
-    generations_SGA = range(25)
-    enemies = [2,4,5]
+    generations = range(20)
+    generations_SGA = range(20)
+    enemies = [1, 2]
+    en_dict = {1: [2,4,5], 2: [7,8]}
     enemynames = ['Airman (enemy 2)', 'HeatMan (enemy 4)', 'Metalman (enemy 5)']
     colors = ['_', '_', 'blue', '_', 'red', 'black']
     colors_SGA = ['_', '_', 'green', '_', 'orange', 'brown']
@@ -113,8 +114,8 @@ def plot_final_experiment():
         for i in simulations:
             best_fitness[en].append(np.load(f'results_NEAT/final_experiment/final_enemy{en}_{i}/best_fitness.npy'))
             mean_fitness[en].append(np.load(f'results_NEAT/final_experiment//final_enemy{en}_{i}/mean_fitness.npy'))
-            best_fitness_SGA[en].append(np.load(f'results_SGA/e{en}-{i+1}/best_fitness.npy'))
-            mean_fitness_SGA[en].append(np.load(f'results_SGA/e{en}-{i+1}/mean_fitness.npy'))
+            best_fitness_SGA[en].append(np.load(f'results_SGA2/en{en_dict[en]}-{i+1}/best_fitness.npy'))
+            mean_fitness_SGA[en].append(np.load(f'results_SGA2/en{en_dict[en]}-{i+1}/mean_fitness.npy'))
 
     fig, axs = plt.subplots(3,1, figsize=(6,7))
     i = 0
