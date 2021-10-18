@@ -1,6 +1,7 @@
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+import pickle
 
 # use big font size so that it is readable in latex
 matplotlib.rcParams.update({'font.size': 12})
@@ -56,6 +57,32 @@ def plot_pop_experiment():
 def plot_best(tba):
     pass
 
+def plot_ES():
+    generations = range(21)
+
+    path = 'results_ES'
+    with open(f'{path}/en[2,5,6]/log.pkl', 'rb') as file:
+        log = pickle.load(file)
+    # log = pickle.load(f'{path}/en[2,5,6]/log.pkl')
+
+
+    max_fits256 = []
+    avg_fits256 = []
+    std_fits256 = []
+
+    for fit in log.select('max'):
+        max_fits256.append(fit[0])
+    for fit in log.select('avg'):
+        avg_fits256.append(fit[0])
+    for fit in log.select('std'):
+        std_fits256.append(fit[0])
+    
+    mean_std_256 = np.mean(std_fits256)
+    plt.plot(generations, max_fits256, label='max fitness [2,5,6]')
+    plt.fill_between(generations, max_fits256-mean_std_256, max_fits256+mean_std_256, alpha=.1)
+    plt.show()
+    
+    
 
 def plot_final_experiment():
     generations = range(15)
@@ -147,4 +174,5 @@ def plot_boxplot(data_NEAT, data_SGA, enemy):
 
 if __name__ == "__main__":
     # plot_pop_experiment()
-    plot_final_experiment()
+    # plot_final_experiment()
+    plot_ES()
