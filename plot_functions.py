@@ -56,33 +56,9 @@ def plot_pop_experiment():
 
 def plot_best(tba):
     pass
-
-def plot_ES():
-    generations = range(21)
-
-    path = 'results_ES'
-    with open(f'{path}/en[2,5,6]/log.pkl', 'rb') as file:
-        log = pickle.load(file)
-    # log = pickle.load(f'{path}/en[2,5,6]/log.pkl')
-
-
-    max_fits256 = []
-    avg_fits256 = []
-    std_fits256 = []
-
-    for fit in log.select('max'):
-        max_fits256.append(fit[0])
-    for fit in log.select('avg'):
-        avg_fits256.append(fit[0])
-    for fit in log.select('std'):
-        std_fits256.append(fit[0])
-    
-    mean_std_256 = np.mean(std_fits256)
-    plt.plot(generations, max_fits256, label='max fitness [2,5,6]')
-    plt.fill_between(generations, max_fits256-mean_std_256, max_fits256+mean_std_256, alpha=.1)
-    plt.show()
     
     
+
 
 def plot_final_experiment():
     generations = range(20)
@@ -173,7 +149,137 @@ def plot_boxplot(data_NEAT, data_SGA, enemy):
     plt.show()
 
 
+def plot_fitness_task2():
+    '''
+    plots the fitnesses of taks II
+    '''
+    generations = range(20)
+    fig, axs = plt.subplots(2,1, figsize=(6,5))
+    
+    max_fits_SGA_256 = []; max_fits_ES_256 = []
+    avg_fits_SGA_256 = []; avg_fits_ES_256 = []
+    std_fits_SGA_256 = []; std_fits_ES_256 = []
+
+    max_fits_SGA_78 = []; max_fits_ES_78 = []
+    avg_fits_SGA_78 = []; avg_fits_ES_78 = []
+    std_fits_SGA_78 = []; std_fits_ES_78 = []
+    
+    for i in range(1,11,1):
+        max_fits_SGA_256.append(np.load(f'results_SGA2/en[2,5,6]-{i}/best_fitness.npy'))
+        avg_fits_SGA_256.append(np.load(f'results_SGA2/en[2,5,6]-{i}/mean_fitness.npy'))
+
+        max_fits_SGA_78.append(np.load(f'results_SGA2/en[7,8]-{i}/best_fitness.npy'))
+        avg_fits_SGA_78.append(np.load(f'results_SGA2/en[7,8]-{i}/mean_fitness.npy'))
+    
+    max_fit_SGA_256 = [np.mean(k) for k in zip(*max_fits_SGA_256)]
+    avg_fit_SGA_256 = [np.mean(k) for k in zip(*avg_fits_SGA_256)]
+
+    max_fit_SGA_78 = [np.mean(k) for k in zip(*max_fits_SGA_78)]
+    avg_fit_SGA_78 = [np.mean(k) for k in zip(*avg_fits_SGA_78)]
+
+    std_max_SGA_256 = np.std(max_fit_SGA_256)
+    std_avg_SGA_256 = np.std(avg_fit_SGA_256)
+    
+    std_max_SGA_78 = np.std(max_fit_SGA_78)
+    std_avg_SGA_78 = np.std(avg_fit_SGA_78)
+
+    max_fits0 = []
+    max_fits1 = []
+
+    mean_fits0 = []
+    mean_fits1 = []
+
+    
+    with open(f'results_ES/en[2,5,6]/log0.pkl', 'rb') as file:
+        log = pickle.load(file)
+    for fit in log.select('max'):
+        max_fits0.append(fit[0])
+    for fit in log.select('avg'):
+        mean_fits0.append(fit[0])
+
+    ES_gens = range(21)
+
+    with open(f'results_ES/en[2,5,6]/log1.pkl', 'rb') as file:
+        log = pickle.load(file)     
+    for fit in log.select('max'):
+        max_fits1.append(fit[0])
+    for fit in log.select('avg'):
+        mean_fits1.append(fit[0])
+    
+    max_fits_ES_256 = [np.mean(k) for k in zip(max_fits0, max_fits1)][:-1]
+    avg_fits_ES_256 = [np.mean(k) for k in zip(mean_fits0, mean_fits1)][:-1]
+    std_avg_fits_ES_256 = np.std(avg_fits_ES_256)
+    std_max_fits_ES_256 = np.std(max_fits_ES_256)
+
+
+    max_fits2 = []
+    avg_fits2 = []
+    with open(f'results_ES/en[7,8]/log.pkl', 'rb') as file:
+        log = pickle.load(file)     
+    for fit in log.select('max'):
+        max_fits2.append(fit[0])
+    for fit in log.select('avg'):
+        avg_fits2.append(fit[0])
+    
+    max_fits_ES_78 = [np.mean(k) for k in zip(max_fits0, max_fits1)][:-1]
+    avg_fits_ES_78 = [np.mean(k) for k in zip(mean_fits0, mean_fits1)][:-1]
+    std_avg_fits_ES_78 = np.std(avg_fits_ES_78)
+    std_max_fits_ES_78 = np.std(max_fits_ES_78)
+
+    # plot 256 ES
+    axs[0].plot(generations, max_fits_ES_256, label='max fitness ES', color='black' )
+    axs[0].plot(generations, avg_fits_ES_256, label='avg fitness ES', color='black', linestyle='dashed')
+    axs[0].fill_between(generations, max_fits_ES_256-std_max_fits_ES_256, max_fits_ES_256+std_max_fits_ES_256, alpha=.1)
+    axs[0].fill_between(generations, avg_fits_ES_256-std_avg_fits_ES_256, avg_fits_ES_256+std_avg_fits_ES_256, alpha=.1)
+    # plot 256 SGA
+    axs[0].plot(generations, max_fit_SGA_256, label='max fitness SGA', color = 'red')
+    axs[0].plot(generations, avg_fit_SGA_256, label='avg fitness SGA',color = 'red', linestyle='dashed')
+    axs[0].fill_between(generations, max_fit_SGA_256+std_max_SGA_256, max_fit_SGA_256-std_max_SGA_256, alpha = .1)
+    axs[0].fill_between(generations, avg_fit_SGA_256+std_avg_SGA_256, avg_fit_SGA_256-std_avg_SGA_256, alpha = .1)
+    axs[0].set_ylabel('Fitness')
+    axs[0].set_title('Enemies [2,5,6]')
+    axs[0].legend(fontsize='10')
+
+
+    # plot 78 ES
+    axs[1].plot(generations, max_fits_ES_78, label='max fitness ES', color='black' )
+    axs[1].plot(generations, avg_fits_ES_78, label='avg fitness ES', color='black', linestyle='dashed')
+    axs[1].fill_between(generations, max_fits_ES_78-std_max_fits_ES_78, max_fits_ES_78+std_max_fits_ES_78, alpha=.1)
+    axs[1].fill_between(generations, avg_fits_ES_78-std_avg_fits_ES_78, avg_fits_ES_78+std_avg_fits_ES_78, alpha=.1)
+    # plot 78 SGA
+    axs[1].plot(generations, max_fit_SGA_78, label='max fitness SGA', color = 'red')
+    axs[1].plot(generations, avg_fit_SGA_78, label='avg fitness SGA',color = 'red', linestyle='dashed')
+    axs[1].fill_between(generations, max_fit_SGA_78+std_max_SGA_78, max_fit_SGA_78-std_max_SGA_78, alpha = .1)
+    axs[1].fill_between(generations, avg_fit_SGA_78+std_avg_SGA_78, avg_fit_SGA_78-std_avg_SGA_78, alpha = .1)
+    axs[1].set_title('Enemies [7,8]')
+    axs[1].set_xlabel('Generation')
+    axs[1].set_ylabel('Fitness')
+    # axs[1].legend(fontsize='10')
+
+    
+    plt.tight_layout()
+    plt.show()
+        
+
+
+
+
+
+
+
+
+
+    
+    
+    
+    
+        
+        
+
+
+
 if __name__ == "__main__":
     # plot_pop_experiment()
     # plot_final_experiment()
-    plot_ES()
+    # plot_ES()
+    plot_fitness_task2()
