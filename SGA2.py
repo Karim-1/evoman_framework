@@ -63,9 +63,15 @@ start = time.time()
 n_vars = (env.get_num_sensors()+1)*n_hidden_neurons + (n_hidden_neurons+1)*5
 
 #initialize other variables
+<<<<<<< Updated upstream
 npop = 75
 max_gens = 30
 mut_prob = 0.1
+=======
+npop = 100
+max_gens = 75
+mut_prob = 0.2
+>>>>>>> Stashed changes
 LB = -1
 UB = 1
 cross_prob = 0.4
