@@ -1,6 +1,7 @@
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+import pickle
 
 # use big font size so that it is readable in latex
 matplotlib.rcParams.update({'font.size': 12})
@@ -56,11 +57,38 @@ def plot_pop_experiment():
 def plot_best(tba):
     pass
 
+def plot_ES():
+    generations = range(21)
+
+    path = 'results_ES'
+    with open(f'{path}/en[2,5,6]/log.pkl', 'rb') as file:
+        log = pickle.load(file)
+    # log = pickle.load(f'{path}/en[2,5,6]/log.pkl')
+
+
+    max_fits256 = []
+    avg_fits256 = []
+    std_fits256 = []
+
+    for fit in log.select('max'):
+        max_fits256.append(fit[0])
+    for fit in log.select('avg'):
+        avg_fits256.append(fit[0])
+    for fit in log.select('std'):
+        std_fits256.append(fit[0])
+    
+    mean_std_256 = np.mean(std_fits256)
+    plt.plot(generations, max_fits256, label='max fitness [2,5,6]')
+    plt.fill_between(generations, max_fits256-mean_std_256, max_fits256+mean_std_256, alpha=.1)
+    plt.show()
+    
+    
 
 def plot_final_experiment():
-    generations = range(15)
-    generations_SGA = range(25)
-    enemies = [2,4,5]
+    generations = range(20)
+    generations_SGA = range(20)
+    enemies = [1, 2]
+    en_dict = {1: [2,4,5], 2: [7,8]}
     enemynames = ['Airman (enemy 2)', 'HeatMan (enemy 4)', 'Metalman (enemy 5)']
     colors = ['_', '_', 'blue', '_', 'red', 'black']
     colors_SGA = ['_', '_', 'green', '_', 'orange', 'brown']
@@ -86,8 +114,8 @@ def plot_final_experiment():
         for i in simulations:
             best_fitness[en].append(np.load(f'results_NEAT/final_experiment/final_enemy{en}_{i}/best_fitness.npy'))
             mean_fitness[en].append(np.load(f'results_NEAT/final_experiment//final_enemy{en}_{i}/mean_fitness.npy'))
-            best_fitness_SGA[en].append(np.load(f'results_SGA/e{en}-{i+1}/best_fitness.npy'))
-            mean_fitness_SGA[en].append(np.load(f'results_SGA/e{en}-{i+1}/mean_fitness.npy'))
+            best_fitness_SGA[en].append(np.load(f'results_SGA2/en{en_dict[en]}-{i+1}/best_fitness.npy'))
+            mean_fitness_SGA[en].append(np.load(f'results_SGA2/en{en_dict[en]}-{i+1}/mean_fitness.npy'))
 
     fig, axs = plt.subplots(3,1, figsize=(6,7))
     i = 0
@@ -147,4 +175,5 @@ def plot_boxplot(data_NEAT, data_SGA, enemy):
 
 if __name__ == "__main__":
     # plot_pop_experiment()
-    plot_final_experiment()
+    # plot_final_experiment()
+    plot_ES()
