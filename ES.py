@@ -38,7 +38,7 @@ def evaluate(genome):
     
 def selection(population):
     # select best individual among tournsize groups, k times
-    return tools.selTournament(pop = population, k = MU, tournsize = 10, fit_attr='fitness')
+    return tools.selTournament(pop = population, k = LAMBDA, tournsize = 10, fit_attr='fitness')
 
 
 
@@ -68,7 +68,7 @@ def eaMuPlusLambda(population, toolbox, mu, lambda_, cxpb, mutpb, ngen,
     # Begin the generational process
     for gen in range(1, ngen + 1):
         # Vary the population
-        offspring = algorithms.varOr(population, toolbox, lambda_, cxpb, mutpb)
+        offspring = algorithms.varOr(population, toolbox, mu, cxpb, mutpb)
 
         # Evaluate the individuals with an invalid fitness
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
@@ -92,7 +92,9 @@ def eaMuPlusLambda(population, toolbox, mu, lambda_, cxpb, mutpb, ngen,
         gen_nr += 1
 
     return population, logbook
-    
+
+def my_const_multi(values):
+    return values.mean()
 
     
 if __name__=="__main__":
@@ -102,7 +104,7 @@ if __name__=="__main__":
         os.environ["SDL_VIDEODRIVER"] = "dummy"
 
     # create folder
-    experiment_name = 'mutpb_experiment_gradual'
+    experiment_name ='en[2,5,6]'
     if not os.path.exists('results_ES/'+experiment_name):
         os.makedirs('results_ES/'+experiment_name)
 
@@ -121,9 +123,6 @@ if __name__=="__main__":
                     player_controller=player_controller(n_hidden_neurons),
                     logs='off'
                     )
-
-    def my_const_multi(values):
-        return values.mean()
     
     env.cons_multi = my_const_multi
     
@@ -133,24 +132,19 @@ if __name__=="__main__":
     n_vars = (env.get_num_sensors()+1)*n_hidden_neurons + (n_hidden_neurons+1)*5
 
     #initialize other variables
-    MU= 50
-    LAMBDA = 25
-    
-    SIGMA = 1.5
-    ngen = 20
-
-    gen_nr = 1 # define generation nr for mutation probability
-    evals = 0 # define nr of evals to count gen number
-
+    LAMBDA = 75 # population size
+    MU = 75 # offspring
+    cxpb = 0.4 # crossing probability
     mutpb = 0.2 # mutation probability
     LB = -1
-    UB = 1
-    cxpb = 0.4 # crossing probability
+    UB = 1    
+    SIGMA = 1.5 # for the gaussian distribution
+    ngen = 20
+    gen_nr = 1 # define generation nr for mutation probability
+    
 
     creator.create("FitnessMax", base.Fitness, weights=(1.0,))
-    creator.create("Individual", list, fitness=creator.FitnessMax)
-
-    print(f'\n----- Running mu = {MU}, lambda = {LAMBDA}, ngen = {ngen} -----')    
+    creator.create("Individual", list, fitness=creator.FitnessMax) 
 
     # create deap functions
     toolbox = base.Toolbox()
@@ -161,8 +155,8 @@ if __name__=="__main__":
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
     toolbox.register("evaluate", evaluate)
     toolbox.register("crossover", tools.cxTwoPoint)
-    toolbox.register("mutate", tools.mutGaussian, mu=MU, sigma=SIGMA, indpb=CallbackProxy(lambda: .9**gen_nr))
-    # toolbox.register("mutate", tools.mutGaussian, mu=MU, sigma=SIGMA, indpb=.05)
+    # toolbox.register("mutate", tools.mutGaussian, mu=MU, sigma=SIGMA, indpb=CallbackProxy(lambda: .9**gen_nr))
+    toolbox.register("mutate", tools.mutGaussian, mu=MU, sigma=SIGMA, indpb=.05)
     toolbox.register("select", tools.selTournament, tournsize=3)
     toolbox.register("mate", tools.cxTwoPoint)
     
@@ -173,71 +167,40 @@ if __name__=="__main__":
     stats.register("min", np.min, axis=0)
     stats.register("max", np.max, axis=0)
 
-    # create population
-    pop = toolbox.population(n=LAMBDA)
+    overall_best = 0
 
-    fitnesses = list(map(toolbox.evaluate, pop))
+    for i in range(10):   
+        print(f'\n----- Running mu = {MU}, lambda = {LAMBDA}, ngen = {ngen}, round = {i} -----')   
+        #  create population
+        pop = toolbox.population(n=LAMBDA)
+
+        fitnesses = list(map(toolbox.evaluate, pop))
     
-    for individual, fit in zip(pop, fitnesses):
-        individual.fitness.values = (fit,)
+        for individual, fit in zip(pop, fitnesses):
+            individual.fitness.values = (fit,)
 
 
-    # best_fitness, mean_fitness = [], []
-    population, log =  eaMuPlusLambda(pop, toolbox, MU, LAMBDA, cxpb, mutpb, ngen, stats)
+        pop, log =  eaMuPlusLambda(pop, toolbox, MU, LAMBDA, cxpb, mutpb, ngen, stats)
 
-    # print(population)
-    print(log.select("avg"))
-    print(log.select("max"))
-    np.savez(f'results_ES/f{experiment_name}', name1=log.select("avg"), name2=log.select("max"), name3=log.select("std"))
+        best = np.argmax(fitnesses)
+        record = stats.compile(pop)
+
+        max_fit = round(np.max(fitnesses),2)
+        if max_fit > overall_best:
+            overall_best = max_fit
+            fits = [round(x,2) for x in fitnesses]
+            best = np.where(fits == max_fit)
+            best_genome = pop[best[0][0]]
+            np.savetxt('results_ES/'+experiment_name+'/best.txt',best_genome) # saving just to be sure
+            np.save('results_ES/'+experiment_name+'/overall_best', best_genome)
+
+    np.savetxt('results_ES/'+experiment_name+'/best.txt',best_genome)
+    np.save('results_ES/'+experiment_name+'/overall_best', best_genome)
 
     t1 = time.time()
 
     print(f'\n------------------- Simulation took {round((t1-t0)/60, 2)} minutes -------------------')
-
-    # csvfile = f'results_ES/{experiment_name}/results.csv'
-    # csv_columns = record.keys()
-    # with open(csvfile) as csvfile:
-    #     writer = csv.DictWriter(csvfile, fieldnames=csv_columns)
-    #     # writer.writeheader()
-    #     for key in record:
-    #         writer.writerow(record[key])
     
     env.state_to_log()
     
-    #     # saves results
-    #     file_aux  = open('results_SGA2/'+experiment_name+'/results_SGA2.txt','a')
-    #     print( '\n GENERATION '+str(i)+' '+str(round(fits[best],6))+' '+str(round(mean,6))+' '+str(round(std,6)))
-    #     file_aux.write('\n'+str(i)+' '+str(round(fits[best],6))+' '+str(round(mean,6))+' '+str(round(std,6))   )
-    #     file_aux.close()
-    
-    #     # saves generation number
-    #     file_aux  = open('results_SGA2/'+experiment_name+'/gen.txt','w')
-    #     file_aux.write(str(i))
-    #     file_aux.close()
-    
-    #     # saves file with the best solution of this generation
-    #     np.savetxt('results_SGA2/'+experiment_name+'/best.txt',pop[best])
-    
-    #     # saves simulation state
-    #     solutions = [pop, fits]
-    #     env.update_solutions(solutions)
-    #     env.save_state()
-        
 
-    # end = time.time() # prints total execution time for experiment
-    # print( '\nExecution time: '+str(round((end-start)/60))+' minutes \n')
-    
-    # plot_fitness(mean_fitness, best_fitness, 'results_SGA2/'+experiment_name+'/plot_'+experiment_name)
-    
-    # np.save('results_SGA2/'+experiment_name+'/mean_fitness', mean_fitness)
-    # np.save('results_SGA2/'+experiment_name+'/best_fitness', best_fitness)
-    
-    # # saves file with the overall solution
-    # np.savetxt('results_SGA2/'+experiment_name+'/overall_best.txt',best_genome)
-    # np.save('results_SGA2/'+experiment_name+'/overall_best', best_genome)
-    
-    # file = open('results_SGA2/'+experiment_name+'/neuroended', 'w')  # saves control (simulation has ended) file for bash loop file
-    # file.close()
-    
-    
-    # env.state_to_log() # checks environment state
