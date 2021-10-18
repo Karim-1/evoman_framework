@@ -1,0 +1,8 @@
+enemy 1: player energy = 0.0, enemy energy = 74.0
+enemy 2: player energy = 74.4, enemy energy = 0.0
+enemy 3: player energy = 0.0, enemy energy = 30.0
+enemy 4: player energy = 0.0, enemy energy = 60.0
+enemy 5: player energy = 51.880000000000315, enemy energy = 0.0
+enemy 6: player energy = 0.0, enemy energy = 28.0
+enemy 7: player energy = 0.0, enemy energy = 28.0
+enemy 8: player energy = 0.0, enemy energy = 30.0

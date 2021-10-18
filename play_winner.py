@@ -68,7 +68,7 @@ if __name__ == "__main__":
         
         n_hidden_neurons = 10
         enemies = [1,2,3,4,5,6,7,8]
-        name = '[2,5,6]'
+        name = '[7,8]'
         
         if not os.path.exists(f'plots2/'):
             os.makedirs(f'plots2/')
