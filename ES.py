@@ -179,27 +179,23 @@ if __name__=="__main__":
         for individual, fit in zip(pop, fitnesses):
             individual.fitness.values = (fit,)
 
-        # fits = [ind.fitness.values[0] for ind in pop]
 
         pop, log =  eaMuPlusLambda(pop, toolbox, MU, LAMBDA, cxpb, mutpb, ngen, stats)
 
         best = np.argmax(fitnesses)
         record = stats.compile(pop)
 
-        max_fit = record['max'][0]
-        print(max_fit)
+        max_fit = round(np.max(fitnesses),2)
         if max_fit > overall_best:
-        # if fitnesses[best] > overall_best:
             overall_best = max_fit
             fits = [round(x,2) for x in fitnesses]
-            best = np.where(fits == round(max_fit,2))
-            print(best[0])
+            best = np.where(fits == max_fit)
             best_genome = pop[best[0][0]]
+            np.savetxt('results_ES/'+experiment_name+'/best.txt',best_genome) # saving just to be sure
+            np.save('results_ES/'+experiment_name+'/overall_best', best_genome)
 
-        np.savetxt('results_ES/'+experiment_name+'/best.txt',best_genome)
-        np.save('results_ES/'+experiment_name+'/overall_best', best_genome)
-    
     np.savetxt('results_ES/'+experiment_name+'/best.txt',best_genome)
+    np.save('results_ES/'+experiment_name+'/overall_best', best_genome)
 
     t1 = time.time()
 
