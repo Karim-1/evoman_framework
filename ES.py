@@ -105,12 +105,14 @@ if __name__=="__main__":
         os.environ["SDL_VIDEODRIVER"] = "dummy"
 
     # create folder
-    experiment_name ='en[7,8]'
+    experiment_name ='en[2,5,6]'
+    # experiment_name ='en[7,8]'
     if not os.path.exists('results_ES/'+experiment_name):
         os.makedirs('results_ES/'+experiment_name)
 
     n_hidden_neurons = 10
-    enemies = [7,8]
+    enemies = [2,5,6]
+    # enemies = [7,8]
 
     # initializes environment with ai player using random controller, playing against static enemy
     env = Environment(experiment_name='results_ES/'+experiment_name,
@@ -171,7 +173,8 @@ if __name__=="__main__":
     overall_best = 0
 
     # lists to store information for each generation
-    for i in range(10):   
+    # for i in range(10):   
+    for i in range(5,10,1):   
         start = time.time()
         print(f'\n----- Running mu = {MU}, lambda = {LAMBDA}, ngen = {ngen}, round = {i} -----')   
         #  create population
